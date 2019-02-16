@@ -1,6 +1,6 @@
 # CS498CCA2019
 
-##**Team:**
+## **Team:**
 
 Rohit Bansal (rbansal3)
 Paul Nel (paulnel2)
