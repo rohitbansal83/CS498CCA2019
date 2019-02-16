@@ -1,2 +1,7 @@
 # CS498CCA2019
-Final Project Work
+team:
+Rohit Bansal
+Paul Nel
+Alpesh
+Kahtan
+Final Project Work 
