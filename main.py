@@ -32,6 +32,14 @@
 
 import numpy as np
 
+
+def ReadFile(path):
+    with open(path, 'r') as f:
+        reader = np.genfromtxt(f, delimiter=',')
+        data = np.array(reader)
+    return data
+
+
 def Combine(files):
     with open(files[0], 'r') as f:
         reader = np.genfromtxt(f, delimiter=',')
@@ -44,9 +52,10 @@ def Combine(files):
 
     return(data)
 
+
 def main():
     attributes = ["age", "sex", "cp", "trestbps", "chol",
-                  "fbs", "restecg", "thalach", "exang", 
+                  "fbs", "restecg", "thalach", "exang",
                   "oldpeak", "slope", "ca", "thal", "num"]
 
     files = ['data/processed.cleveland.data',
@@ -56,6 +65,7 @@ def main():
 
     data = Combine(files)
     print(data)
+
 
 if __name__ == "__main__":
     main()
