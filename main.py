@@ -33,6 +33,19 @@
 import numpy as np
 
 
+def CleanData(data, remove_nan=True, indices=[]):
+    if noChangeRequired(remove_nan, indices):
+        return data
+    if remove_nan:
+        mask = np.isnan(data).any(axis=1)
+        return data[~mask]
+    return data
+
+
+def noChangeRequired(remove_nan, indices):
+    return remove_nan == False and len(indices) == 0
+
+
 def ReadFile(path):
     with open(path, 'r') as f:
         reader = np.genfromtxt(f, delimiter=',')
@@ -63,8 +76,12 @@ def main():
              'data/processed.switzerland.data',
              'data/processed.va.data']
 
-    data = Combine(files)
+    # data = Combine(files)
+    data = ReadFile('data/processed.cleveland.data')
+    print(data.shape)
+    data = CleanData(data, remove_nan=True)
     print(data)
+    print(data.shape)
 
 
 if __name__ == "__main__":
