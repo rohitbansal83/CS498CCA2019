@@ -33,12 +33,14 @@
 import numpy as np
 
 
-def CleanData(data, remove_nan=True, indices=[]):
+def Clean(data, remove_nan=True, indices=[]):
     if noChangeRequired(remove_nan, indices):
         return data
+    if len(indices) > 0:
+        data = data[:, indices]
     if remove_nan:
         mask = np.isnan(data).any(axis=1)
-        return data[~mask]
+        data = data[~mask]
     return data
 
 
@@ -46,24 +48,34 @@ def noChangeRequired(remove_nan, indices):
     return remove_nan == False and len(indices) == 0
 
 
-def ReadFile(path):
+def ReadSingle(path):
     with open(path, 'r') as f:
-        reader = np.genfromtxt(f, delimiter=',')
-        data = np.array(reader)
+        data = getData(f)
     return data
 
 
 def Combine(files):
+    set_id = 0
     with open(files[0], 'r') as f:
-        reader = np.genfromtxt(f, delimiter=',')
-        data = np.array(reader)
-
+        data = getData(f, set_id)
     for file in files[1:]:
+        set_id += 1
         with open(file, 'r') as f:
-            reader = np.genfromtxt(f, delimiter=',')
-            data = np.append(data, reader, axis=0)
-
+            data = np.append(data, getData(f, set_id), axis=0)
     return(data)
+
+
+def getData(f, set_id=-1):
+    reader = np.genfromtxt(f, delimiter=',')
+    data = np.array(reader)
+    if set_id >= 0:
+        data = insertSetID(data, set_id)
+    return data
+
+
+def insertSetID(data, set_id):
+    data = np.insert(data, data.shape[1]-1, set_id, axis=1)
+    return data
 
 
 def main():
@@ -77,11 +89,14 @@ def main():
              'data/processed.va.data']
 
     # data = Combine(files)
-    data = ReadFile('data/processed.cleveland.data')
-    print(data.shape)
-    data = CleanData(data, remove_nan=True)
-    print(data)
-    print(data.shape)
+    cleveland_data = ReadSingle('data/processed.cleveland.data')
+    cleveland_data = Clean(cleveland_data, remove_nan=True)
+
+    features = [0, 1, 2, 6, 7, 8, 13, 14]
+    combined_data = Combine(files)
+    combined_data = Clean(combined_data, remove_nan=True, indices=features)
+
+    np.savetxt('data.txt', combined_data)
 
 
 if __name__ == "__main__":

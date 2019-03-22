@@ -10,5 +10,8 @@ a = np.array([
     [2, 3, 4]
 ])
 
-mask = np.all(np.isnan(a) | np.equal(a, 0), axis=1)
-a[~mask]
+mask = np.isnan(a).any(axis=1)
+a = a[~mask]
+idx = [0, 2]
+print(a)
+print(a[:, idx])
