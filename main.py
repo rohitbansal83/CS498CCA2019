@@ -78,6 +78,11 @@ def insertSetID(data, set_id):
     return data
 
 
+def removeOutliers(data, outliers):
+    data = np.delete(data, outliers, axis=0)
+    return data
+
+
 def main():
     attributes = ["age", "sex", "cp", "trestbps", "chol",
                   "fbs", "restecg", "thalach", "exang",
@@ -88,15 +93,23 @@ def main():
              'data/processed.switzerland.data',
              'data/processed.va.data']
 
-    # data = Combine(files)
     cleveland_data = ReadSingle('data/processed.cleveland.data')
     cleveland_data = Clean(cleveland_data, remove_nan=True)
 
     features = [0, 1, 2, 6, 7, 8, 13, 14]
     combined_data = Combine(files)
-    combined_data = Clean(combined_data, remove_nan=True, indices=features)
+    combined_data = Clean(
+        combined_data, remove_nan=True, indices=features)
 
-    np.savetxt('data.txt', combined_data)
+    # outliers identified using standarised residuals with significantly high deviaiton (R)
+    outliers = [208]
+    cleveland_data = removeOutliers(cleveland_data, outliers)
+
+    outliers = [211]
+    combined_data = removeOutliers(combined_data, outliers)
+
+    np.savetxt('cleveland_data.txt', cleveland_data)
+    np.savetxt('combined_data.txt', combined_data)
 
 
 if __name__ == "__main__":
