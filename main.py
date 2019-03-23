@@ -96,6 +96,7 @@ def main():
     cleveland_data = ReadSingle('data/processed.cleveland.data')
     cleveland_data = Clean(cleveland_data, remove_nan=True)
 
+    # coloumn 13 is new feature coloumn containing the set_id: 0 = cleveland, 1 = hungarian etc.
     features = [0, 1, 2, 6, 7, 8, 13, 14]
     combined_data = Combine(files)
     combined_data = Clean(
