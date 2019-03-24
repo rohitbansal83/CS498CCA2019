@@ -95,15 +95,17 @@ def main():
 
     cleveland_data = ReadSingle('data/processed.cleveland.data')
     cleveland_data = Clean(cleveland_data, remove_nan=True)
+    np.savetxt('pre_cleveland.txt', cleveland_data)
 
     # coloumn 13 is new feature coloumn containing the set_id: 0 = cleveland, 1 = hungarian etc.
     features = [0, 1, 2, 6, 7, 8, 13, 14]
     combined_data = Combine(files)
     combined_data = Clean(
         combined_data, remove_nan=True, indices=features)
+    np.savetxt("pre_combined.txt", combined_data)
 
     # outliers identified using standarised residuals with significantly high deviaiton (R)
-    outliers = [208]
+    outliers = [90, 151, 208]
     cleveland_data = removeOutliers(cleveland_data, outliers)
 
     outliers = [211]
