@@ -111,8 +111,8 @@ def main():
     outliers = [211]
     combined_data = removeOutliers(combined_data, outliers)
 
-    np.savetxt('cleveland_data.txt', cleveland_data)
-    np.savetxt('combined_data.txt', combined_data)
+    np.savetxt('cleveland_data.txt', cleveland_data, delimiter=',')
+    np.savetxt('combined_data.txt', combined_data, delimiter=',')
 
 
 if __name__ == "__main__":
