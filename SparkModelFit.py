@@ -15,7 +15,6 @@ spark = SparkSession \
     .appName("Heart Disease Model Fit") \
     .getOrCreate()
 	
-
 columns = ["age", "sex", "cp", "restecg", "thalach", "exang", "setid", "label"]
 exclude = ["label"]
 	
@@ -26,7 +25,7 @@ VA = VectorAssembler(inputCols = [feature for feature in columns if feature not 
                      outputCol = 'features')
 df = VA.transform(df)
 df = df.select(['features', 'label'])
-df.show(3)
+if DEBUG: df.show(3)
 
 splits = df.randomSplit([0.7, 0.3])
 train_df = splits[0]
