@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # $example on$
     # load data file.
     inputData = spark.read.format("libsvm") \
-        .load("combined_ternary_data")
+        .load("combined_hd_level")
 
     # generate the train/test split.
     (train, test) = inputData.randomSplit([0.8, 0.2])
