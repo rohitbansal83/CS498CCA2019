@@ -1,85 +1,77 @@
-# --------------------------------------------------
-#  Spark Application to Fit Linear Regression model
-#  on Heart Disease Dataset
-# --------------------------------------------------
+from __future__ import print_function
 
+from pyspark.ml.classification import LinearSVC
+from pyspark.ml.classification import LogisticRegression, OneVsRest
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
-from pyspark.ml.feature import VectorAssembler
-from pyspark.ml.regression import LinearRegression
-from pyspark.ml.evaluation import RegressionEvaluator
 
-DEBUG = True
-CLEVELAND = "cleveland_data.txt"
-COMBINED = "combined_data.txt"
+DEBUG = False
+if __name__ == "__main__":
+    spark = SparkSession\
+        .builder\
+        .appName("linearSVC Example")\
+        .getOrCreate()
 
-spark = SparkSession \
-    .builder \
-    .appName("Heart Disease Model Fit") \
-    .getOrCreate()
+    # Load binary training data (heart disease = YES or NO)
+    inputData = spark.read.format("libsvm").load("combined_hd_absence")
 
+    if DEBUG:
+        # generate the train/test split.    
+        (train, test) = inputData.randomSplit([0.8, 0.2])
+    else:
+        train = inputData
 
-data_set = CLEVELAND
+    lsvc = LinearSVC(maxIter=10, regParam=0.1)
 
-if data_set == CLEVELAND:
-    columns = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
-               "thalach", "exang", "oldpeak", "slope", "ca", "thal",  "label"]
-elif data_set == COMBINED:
-    columns = ["age", "sex", "cp", "restecg",
-               "thalach", "exang", "setid", "label"]
-else:
-    data_set = []
+    # Fit the model
+    lsvcModel = lsvc.fit(train)
 
-exclude = ["label"]
+    if DEBUG:
+        # score the model on test data.
+        #test = spark.read.format("libsvm").load("user_data")
+        predictions = lsvcModel.transform(test)
+        #predictions.rdd.saveAsTextFile('test1')
 
-df = spark.read.format("csv").options(
-    header="false", inferschema="true").load(data_set)
-df = df.toDF(*columns)
-print(data_set)
+        # obtain evaluator.
+        evaluator = MulticlassClassificationEvaluator(metricName="accuracy")
 
-VA = VectorAssembler(inputCols=[feature for feature in columns if feature not in exclude],
-                     outputCol='features')
-df = VA.transform(df)
-df = df.select(['features', 'label'])
-if DEBUG:
-    df.show(3)
+        # compute the classification error on test data.
+        accuracy = evaluator.evaluate(predictions)
+        print("Test Error = %g" % (1.0 - accuracy))
 
-splits = df.randomSplit([0.7, 0.3])
-train_df = splits[0]
-test_df = splits[1]
+    # Load binary training data (heart disease level = MEDIUM or HIGH)
+    inputData = spark.read.format("libsvm").load("combined_hd_level")
+    
+    if DEBUG:
+        # generate the train/test split.
+        (train, test) = inputData.randomSplit([0.8, 0.2])
+    else:
+        train = inputData
+    
+    # instantiate the base classifier.
+    lr = LogisticRegression(maxIter=10, tol=1E-6, fitIntercept=True)
 
-lr = LinearRegression(featuresCol='features', labelCol='label', maxIter=10, regParam=0.3,
-                      elasticNetParam=0.8)
-lr_model = lr.fit(train_df)
-if DEBUG:
-    print("Coefficients: " + str(lr_model.coefficients))
-if DEBUG:
-    print("Intercept: " + str(lr_model.intercept))
+    # instantiate the One Vs Rest Classifier.
+    ovr = OneVsRest(classifier=lr)
 
-trainingSummary = lr_model.summary
-if DEBUG:
-    print("RMSE: %f" % trainingSummary.rootMeanSquaredError)
-if DEBUG:
-    print("r2: %f" % trainingSummary.r2)
+    # train the multiclass model.
+    ovrModel = ovr.fit(train)
+    
+    if DEBUG:
+        # score the model on test data.
 
-lr_predictions = lr_model.transform(test_df)
-lr_predictions.select("prediction", "label", "features").show(5)
-lr_evaluator = RegressionEvaluator(
-    predictionCol="prediction", labelCol="label", metricName="r2")
-if DEBUG:
-    print("R Squared (R2) on test data = %g" %
-          lr_evaluator.evaluate(lr_predictions))
+        predictions = ovrModel.transform(test)
 
-test_result = lr_model.evaluate(test_df)
-if DEBUG:
-    print("Root Mean Squared Error (RMSE) on test data = %g" %
-          test_result.rootMeanSquaredError)
+        # obtain evaluator.
+        evaluator = MulticlassClassificationEvaluator(metricName="accuracy")
 
-if DEBUG:
-    print("numIterations: %d" % trainingSummary.totalIterations)
-if DEBUG:
-    print("objectiveHistory: %s" % str(trainingSummary.objectiveHistory))
-if DEBUG:
-    trainingSummary.residuals.show()
+        # compute the classification error on test data.
+        accuracy = evaluator.evaluate(predictions)
+        print("Test Error = %g" % (1.0 - accuracy))
+    
+    if not DEBUG:
+        # save model
+        lsvcModel.write().overwrite().save("HeartDisearsePredictionModel")
+        ovrModel.write().overwrite().save("HeartDisearseLevelModel")
 
-# save model
-# lr_model.write().overwrite().save("HeartDisearsePredictionModel")
+    spark.stop()
