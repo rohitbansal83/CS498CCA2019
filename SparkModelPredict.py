@@ -4,19 +4,22 @@ from pyspark.ml.classification import LinearSVC, LinearSVCModel
 from pyspark.ml.classification import LogisticRegression, OneVsRest, OneVsRestModel
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
+import json
 
-def predict(record, m1, m2):
-    predicted = m1.transform(record)
-    value = predicted.select('prediction').collect()
-    if int(value[0].prediction) == 0:
-        return "low"
-    else:
-        predicted = m2.transform(record)
-        value = predicted.select('prediction').collect()
-        if int(value[0].prediction) == 0:
-            return "high"
-        else:
-            return "medium"
+
+def predict(data, model_disease, model_level):
+    risk = dict()
+    disease_pred = model_disease.transform(data)
+    for row in disease_pred.rdd.collect():
+        if row['prediction'] == 0:
+            risk[row['label']] = 'low'
+
+    level_pred = model_level.transform(data)
+    for row in level_pred.rdd.collect():
+        if row['label'] not in risk:
+            risk[row['label']] = 'high' if row['prediction'] == 0 else 'medium'
+    return risk
+
 
 if __name__ == "__main__":
     spark = SparkSession\
@@ -28,15 +31,11 @@ if __name__ == "__main__":
     inputData = spark.read.format("libsvm").load("user_data")
 
     # load models
-    lsvcModel = LinearSVCModel.load("HeartDisearsePredictionModel")
-    ovrModel = OneVsRestModel.load("HeartDisearseLevelModel")
-        
-    # hd prediction
-    predictions_hd = lsvcModel.transform(inputData)
-    predictions_hd.rdd.saveAsTextFile('hd_prediction')
+    prediction_model = LinearSVCModel.load("HeartDisearsePredictionModel")
+    level_model = OneVsRestModel.load("HeartDisearseLevelModel")
+    risk_level = predict(inputData, prediction_model, level_model)
 
-    # hd level prediction
-    predictions_lv = ovrModel.transform(inputData)
-    predictions_lv.rdd.saveAsTextFile('hd_level')
-    
+    with open('predict.json', 'w') as outfile:
+        json.dump(json.dumps(risk_level), outfile)
+
     spark.stop()

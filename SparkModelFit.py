@@ -5,7 +5,7 @@ from pyspark.ml.classification import LogisticRegression, OneVsRest
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
 
-DEBUG = False
+DEBUG = True
 if __name__ == "__main__":
     spark = SparkSession\
         .builder\
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     inputData = spark.read.format("libsvm").load("combined_hd_absence")
 
     if DEBUG:
-        # generate the train/test split.    
+        # generate the train/test split.
         (train, test) = inputData.randomSplit([0.8, 0.2])
     else:
         train = inputData
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         # score the model on test data.
         #test = spark.read.format("libsvm").load("user_data")
         predictions = lsvcModel.transform(test)
-        #predictions.rdd.saveAsTextFile('test1')
+        # predictions.rdd.saveAsTextFile('test1')
 
         # obtain evaluator.
         evaluator = MulticlassClassificationEvaluator(metricName="accuracy")
@@ -41,13 +41,13 @@ if __name__ == "__main__":
 
     # Load binary training data (heart disease level = MEDIUM or HIGH)
     inputData = spark.read.format("libsvm").load("combined_hd_level")
-    
+
     if DEBUG:
         # generate the train/test split.
         (train, test) = inputData.randomSplit([0.8, 0.2])
     else:
         train = inputData
-    
+
     # instantiate the base classifier.
     lr = LogisticRegression(maxIter=10, tol=1E-6, fitIntercept=True)
 
@@ -56,11 +56,12 @@ if __name__ == "__main__":
 
     # train the multiclass model.
     ovrModel = ovr.fit(train)
-    
+
     if DEBUG:
         # score the model on test data.
 
         predictions = ovrModel.transform(test)
+        print(predictions.select('label', 'prediction').show(20))
 
         # obtain evaluator.
         evaluator = MulticlassClassificationEvaluator(metricName="accuracy")
@@ -68,7 +69,7 @@ if __name__ == "__main__":
         # compute the classification error on test data.
         accuracy = evaluator.evaluate(predictions)
         print("Test Error = %g" % (1.0 - accuracy))
-    
+
     if not DEBUG:
         # save model
         lsvcModel.write().overwrite().save("HeartDisearsePredictionModel")
