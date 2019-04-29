@@ -5,7 +5,7 @@ from pyspark.ml.classification import LogisticRegression, OneVsRest
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
 
-DEBUG = True
+DEBUG = False
 if __name__ == "__main__":
     spark = SparkSession\
         .builder\

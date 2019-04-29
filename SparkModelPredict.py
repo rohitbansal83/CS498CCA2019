@@ -35,7 +35,7 @@ if __name__ == "__main__":
     level_model = OneVsRestModel.load("HeartDisearseLevelModel")
     risk_level = predict(inputData, prediction_model, level_model)
 
-    with open('predict.json', 'w') as outfile:
-        json.dump(json.dumps(risk_level), outfile)
-
+    with open('predict.csv', 'w') as outfile:
+        for id, level in risk_level.items():
+            outfile.write(str(int(id)) + ","+str(level)+"\n")
     spark.stop()
