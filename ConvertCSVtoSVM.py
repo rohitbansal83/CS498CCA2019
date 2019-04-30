@@ -83,10 +83,10 @@ def construct_Test_line(label, line):
 # ---
 
 input_file = sys.argv[1]
-output_file = 'combined_hd_absence'
-output_file1 = 'combined_hd_level'
-output_file2 = 'user_data'
-output_file3 = 'combined_hd_base'
+output_file = 'data/combined_hd_absence'
+output_file1 = 'data/combined_hd_level'
+output_file2 = 'data/user_data'
+output_file3 = 'data/combined_hd_base'
 
 try:
     label_index = int(sys.argv[2])
@@ -118,8 +118,8 @@ for line in reader:
     else:
         label = line.pop(label_index)
 
-    new_line = construct_Base_line(label, line)
-    o3.write(new_line)
+    # new_line = construct_Base_line(label, line)
+    # o3.write(new_line)
 
     new_line = construct_Bin_line(label, line)
     o.write(new_line)

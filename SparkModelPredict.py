@@ -28,11 +28,12 @@ if __name__ == "__main__":
         .getOrCreate()
 
     # Load user data
-    inputData = spark.read.format("libsvm").load("user_data")
+    inputData = spark.read.format("libsvm").load("data/user_data")
 
     # load models
-    prediction_model = LinearSVCModel.load("HeartDisearsePredictionModel")
-    level_model = OneVsRestModel.load("HeartDisearseLevelModel")
+    prediction_model = LinearSVCModel.load(
+        "models/HeartDisearsePredictionModel")
+    level_model = OneVsRestModel.load("models/HeartDisearseLevelModel")
     risk_level = predict(inputData, prediction_model, level_model)
 
     with open('predict.csv', 'w') as outfile:

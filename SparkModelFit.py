@@ -13,7 +13,7 @@ if __name__ == "__main__":
         .getOrCreate()
 
     # Load binary training data (heart disease = YES or NO)
-    inputData = spark.read.format("libsvm").load("combined_hd_absence")
+    inputData = spark.read.format("libsvm").load("data/combined_hd_absence")
 
     if DEBUG:
         # generate the train/test split.
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         print("Test Error = %g" % (1.0 - accuracy))
 
     # Load binary training data (heart disease level = MEDIUM or HIGH)
-    inputData = spark.read.format("libsvm").load("combined_hd_level")
+    inputData = spark.read.format("libsvm").load("data/combined_hd_level")
 
     if DEBUG:
         # generate the train/test split.
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     if not DEBUG:
         # save model
-        lsvcModel.write().overwrite().save("HeartDisearsePredictionModel")
-        ovrModel.write().overwrite().save("HeartDisearseLevelModel")
+        lsvcModel.write().overwrite().save("models/HeartDisearsePredictionModel")
+        ovrModel.write().overwrite().save("models/HeartDisearseLevelModel")
 
     spark.stop()

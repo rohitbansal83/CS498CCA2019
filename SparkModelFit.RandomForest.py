@@ -36,29 +36,33 @@ if __name__ == "__main__":
 
     # $example on$
     # Load and parse the data file, converting it to a DataFrame.
-    data = spark.read.format("libsvm").load("combined_ternary_data")
+    data = spark.read.format("libsvm").load("data/combined_ternary_data")
 
     # Index labels, adding metadata to the label column.
     # Fit on whole dataset to include all labels in index.
-    labelIndexer = StringIndexer(inputCol="label", outputCol="indexedLabel").fit(data)
+    labelIndexer = StringIndexer(
+        inputCol="label", outputCol="indexedLabel").fit(data)
 
     # Automatically identify categorical features, and index them.
     # Set maxCategories so features with > 4 distinct values are treated as continuous.
     featureIndexer =\
-        VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(data)
+        VectorIndexer(inputCol="features",
+                      outputCol="indexedFeatures", maxCategories=4).fit(data)
 
     # Split the data into training and test sets (30% held out for testing)
     (trainingData, testData) = data.randomSplit([0.7, 0.3])
 
     # Train a RandomForest model.
-    rf = RandomForestClassifier(labelCol="indexedLabel", featuresCol="indexedFeatures", numTrees=10)
+    rf = RandomForestClassifier(
+        labelCol="indexedLabel", featuresCol="indexedFeatures", numTrees=10)
 
     # Convert indexed labels back to original labels.
     labelConverter = IndexToString(inputCol="prediction", outputCol="predictedLabel",
                                    labels=labelIndexer.labels)
 
     # Chain indexers and forest in a Pipeline
-    pipeline = Pipeline(stages=[labelIndexer, featureIndexer, rf, labelConverter])
+    pipeline = Pipeline(
+        stages=[labelIndexer, featureIndexer, rf, labelConverter])
 
     # Train model.  This also runs the indexers.
     model = pipeline.fit(trainingData)

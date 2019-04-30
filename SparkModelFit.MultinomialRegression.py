@@ -33,7 +33,7 @@ if __name__ == "__main__":
     training = spark \
         .read \
         .format("libsvm") \
-        .load("combined_hd_level")
+        .load("data/combined_hd_level")
 
     lr = LogisticRegression(maxIter=10, regParam=0.3, elasticNetParam=0.8)
 
