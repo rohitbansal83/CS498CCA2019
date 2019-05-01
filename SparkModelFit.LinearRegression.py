@@ -9,8 +9,8 @@ from pyspark.ml.regression import LinearRegression
 from pyspark.ml.evaluation import RegressionEvaluator
 
 DEBUG = True
-CLEVELAND = "cleveland_data.txt"
-COMBINED = "combined_data.txt"
+CLEVELAND = "data/cleveland_data.txt"
+COMBINED = "data/combined_data.txt"
 
 spark = SparkSession \
     .builder \
