@@ -1,66 +1,85 @@
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# --------------------------------------------------
+#  Spark Application to Fit Linear Regression model
+#  on Heart Disease Dataset
+# --------------------------------------------------
 
-"""
-An example of Multiclass to Binary Reduction with One Vs Rest,
-using Logistic Regression as the base classifier.
-Run with:
-  bin/spark-submit examples/src/main/python/ml/one_vs_rest_example.py
-"""
-from __future__ import print_function
-
-# $example on$
-from pyspark.ml.classification import LogisticRegression, OneVsRest
-from pyspark.ml.evaluation import MulticlassClassificationEvaluator
-# $example off$
 from pyspark.sql import SparkSession
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import RegressionEvaluator
 
-if __name__ == "__main__":
-    spark = SparkSession \
-        .builder \
-        .appName("OneVsRestExample") \
-        .getOrCreate()
+DEBUG = True
+CLEVELAND = "cleveland_data.txt"
+COMBINED = "combined_data.txt"
 
-    # $example on$
-    # load data file.
-    inputData = spark.read.format("libsvm") \
-        .load("data/combined_hd_level")
+spark = SparkSession \
+    .builder \
+    .appName("Heart Disease Model Fit") \
+    .getOrCreate()
 
-    # generate the train/test split.
-    (train, test) = inputData.randomSplit([0.8, 0.2])
 
-    # instantiate the base classifier.
-    lr = LogisticRegression(maxIter=10, tol=1E-6, fitIntercept=True)
+data_set = CLEVELAND
 
-    # instantiate the One Vs Rest Classifier.
-    ovr = OneVsRest(classifier=lr)
+if data_set == CLEVELAND:
+    columns = ["age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
+               "thalach", "exang", "oldpeak", "slope", "ca", "thal",  "label"]
+elif data_set == COMBINED:
+    columns = ["age", "sex", "cp", "restecg",
+               "thalach", "exang", "setid", "label"]
+else:
+    data_set = []
 
-    # train the multiclass model.
-    ovrModel = ovr.fit(train)
+exclude = ["label"]
 
-    # score the model on test data.
-    predictions = ovrModel.transform(test)
+df = spark.read.format("csv").options(
+    header="false", inferschema="true").load(data_set)
+df = df.toDF(*columns)
+print(data_set)
 
-    # obtain evaluator.
-    evaluator = MulticlassClassificationEvaluator(metricName="accuracy")
+VA = VectorAssembler(inputCols=[feature for feature in columns if feature not in exclude],
+                     outputCol='features')
+df = VA.transform(df)
+df = df.select(['features', 'label'])
+if DEBUG:
+    df.show(3)
 
-    # compute the classification error on test data.
-    accuracy = evaluator.evaluate(predictions)
-    print("Test Error = %g" % (1.0 - accuracy))
-    # $example off$
+splits = df.randomSplit([0.7, 0.3])
+train_df = splits[0]
+test_df = splits[1]
 
-    spark.stop()
+lr = LinearRegression(featuresCol='features', labelCol='label', maxIter=10, regParam=0.3,
+                      elasticNetParam=0.8)
+lr_model = lr.fit(train_df)
+if DEBUG:
+    print("Coefficients: " + str(lr_model.coefficients))
+if DEBUG:
+    print("Intercept: " + str(lr_model.intercept))
+
+trainingSummary = lr_model.summary
+if DEBUG:
+    print("RMSE: %f" % trainingSummary.rootMeanSquaredError)
+if DEBUG:
+    print("r2: %f" % trainingSummary.r2)
+
+lr_predictions = lr_model.transform(test_df)
+lr_predictions.select("prediction", "label", "features").show(5)
+lr_evaluator = RegressionEvaluator(
+    predictionCol="prediction", labelCol="label", metricName="r2")
+if DEBUG:
+    print("R Squared (R2) on test data = %g" %
+          lr_evaluator.evaluate(lr_predictions))
+
+test_result = lr_model.evaluate(test_df)
+if DEBUG:
+    print("Root Mean Squared Error (RMSE) on test data = %g" %
+          test_result.rootMeanSquaredError)
+
+if DEBUG:
+    print("numIterations: %d" % trainingSummary.totalIterations)
+if DEBUG:
+    print("objectiveHistory: %s" % str(trainingSummary.objectiveHistory))
+if DEBUG:
+    trainingSummary.residuals.show()
+
+# save model
+lr_model.write().overwrite().save("HeartDisearsePredictionModel")
