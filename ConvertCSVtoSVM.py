@@ -118,8 +118,8 @@ for line in reader:
     else:
         label = line.pop(label_index)
 
-    # new_line = construct_Base_line(label, line)
-    # o3.write(new_line)
+    new_line = construct_Base_line(label, line)
+    o3.write(new_line)
 
     new_line = construct_Bin_line(label, line)
     o.write(new_line)

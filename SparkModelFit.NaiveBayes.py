@@ -7,14 +7,16 @@ import shutil
 from pyspark import SparkContext
 from pyspark.mllib.classification import NaiveBayes, NaiveBayesModel
 from pyspark.mllib.util import MLUtils
+from pyspark.mllib.feature import StandardScaler
+from pyspark.mllib.regression import LabeledPoint
 
 sc = SparkContext(appName="HeartDiseaseModelFit")
 
 # Load and parse the data file.
-data = MLUtils.loadLibSVMFile(sc, "data/combined_data_svm.txt")
+data = MLUtils.loadLibSVMFile(sc, "data/combined_hd_base")
 
 # Split data approximately into training (60%) and test (40%)
-training, test = data.randomSplit([0.7, 0.3])
+training, test = data1.randomSplit([0.7, 0.3])
 
 # Train a naive Bayes model.
 model = NaiveBayes.train(training, 1.0)
