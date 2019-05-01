@@ -53,7 +53,7 @@ def construct_Base_line(label, line):
     new_line = []
     new_line.append(label)
     for i, item in enumerate(line):
-        if item == '' or float(item) == 0.0:
+        if item == '' or float(item) <= 0.0:
             continue
         item = 0.0 if item == 'nan' else item
         new_item = "%s:%s" % (i + 1, item)

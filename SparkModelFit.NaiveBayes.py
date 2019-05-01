@@ -16,7 +16,7 @@ sc = SparkContext(appName="HeartDiseaseModelFit")
 data = MLUtils.loadLibSVMFile(sc, "data/combined_hd_base")
 
 # Split data approximately into training (60%) and test (40%)
-training, test = data1.randomSplit([0.7, 0.3])
+training, test = data.randomSplit([0.7, 0.3])
 
 # Train a naive Bayes model.
 model = NaiveBayes.train(training, 1.0)
