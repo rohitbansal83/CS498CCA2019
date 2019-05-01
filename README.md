@@ -4,7 +4,7 @@ We developed a predictive model based on the combined set of data from all four 
 ## Implementation
 
 1.  Clean and transform data, identify and remove outliers
-2.  Transform the Combined dataset to replace all nan values with zeros and convert to svm format.
+2.  Transform the combined dataset to replace all nan values with zeros and convert to svm format.
 3.  Produce two distinct data sets. 
     (a) A dataset with all data points with all labels > 0 set to 1.  This dataset is used to determine the presence of heart disease. 
     (b) A dataset with all records reporting a label of > 0.  All labels > 1 are set to 0.
